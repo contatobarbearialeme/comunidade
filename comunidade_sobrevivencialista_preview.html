@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comunidade Sobrevivencialista</title>
+<style>
+:root{
+  --bg:#07100b; --panel:#0c1710; --panel2:#101e14; --line:#29412e;
+  --text:#d7e6d5; --muted:#819483; --green:#79c267; --amber:#d3a653;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Consolas,"Courier New",monospace}
+#app{min-height:100vh;background:var(--bg)}
+.shell{max-width:1050px;margin:auto;padding:28px 18px}
+.header{border:1px solid var(--line);background:var(--panel);padding:18px 20px;margin-bottom:14px}
+.brand{font-size:clamp(20px,4vw,32px);letter-spacing:2px;color:var(--green)}
+.sub{color:var(--muted);margin-top:6px;font-size:13px}
+.login{max-width:520px;margin:10vh auto;border:1px solid var(--line);background:var(--panel);padding:26px}
+.label{display:block;color:var(--muted);font-size:12px;margin:14px 0 6px}
+input,button{font:inherit}
+input{width:100%;background:#050b07;border:1px solid var(--line);color:var(--text);padding:12px}
+button{background:#17291b;color:var(--green);border:1px solid #36593a;padding:11px 16px;cursor:pointer}
+button:hover{background:#203722}
+.login button{width:100%;margin-top:18px}
+.error{color:#d97967;min-height:18px;font-size:12px;margin-top:9px}
+.chat{display:grid;grid-template-columns:1fr 220px;gap:14px}
+.box{border:1px solid var(--line);background:var(--panel)}
+.bar{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--amber);font-size:12px}
+.messages{height:460px;overflow:auto;padding:14px}
+.msg{margin-bottom:13px}
+.nick{color:var(--green)}
+.time{color:#657668;font-size:11px;margin-left:7px}
+.text{margin-top:3px;color:#c5d4c4;white-space:pre-wrap}
+.users{padding:14px}
+.user{padding:8px 0;border-bottom:1px solid #18291c;color:#b9c9b8;font-size:13px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:8px}
+.compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.compose input{flex:1}
+.note{color:var(--muted);font-size:11px;line-height:1.5;margin-top:12px}
+.hidden{display:none}
+@media(max-width:700px){.chat{grid-template-columns:1fr}.users{display:none}.messages{height:55vh}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+    <div id="login" class="login">
+      <div class="brand">[ COMUNIDADE // SOBREVIVENCIAL ]</div>
+      <div class="sub">ACESSO RESTRITO • SALA DE CONVERSA</div>
+      <label class="label">IDENTIFICAÇÃO</label>
+      <input id="nick" placeholder="Digite seu apelido" maxlength="24">
+      <label class="label">SENHA DA COMUNIDADE</label>
+      <input id="pass" type="password" placeholder="Senha de acesso">
+      <button onclick="enter()">[ ENTRAR NA SALA ]</button>
+      <div id="err" class="error"></div>
+      <div class="note">Protótipo local: a senha demonstrativa é <b>LEMESAFE</b>. Em uma versão real, a autenticação e as mensagens devem ficar em um servidor seguro.</div>
+    </div>
+
+    <div id="room" class="hidden">
+      <div class="header">
+        <div class="brand">COMUNIDADE // SOBREVIVENCIAL</div>
+        <div class="sub">SALA PRINCIPAL • <span id="status">CONEXÃO LOCAL</span></div>
+      </div>
+      <div class="chat">
+        <section class="box">
+          <div class="bar">[ CHAT ] COMUNICAÇÃO ENTRE MEMBROS</div>
+          <div id="messages" class="messages">
+            <div class="msg"><span class="nick">SISTEMA</span><span class="time">agora</span><div class="text">Bem-vindo à sala. Respeite os demais membros.</div></div>
+            <div class="msg"><span class="nick">SISTEMA</span><span class="time">agora</span><div class="text">Esta é apenas uma demonstração da interface.</div></div>
+          </div>
+          <div class="compose">
+            <input id="message" placeholder="Digite sua mensagem..." maxlength="500" onkeydown="if(event.key==='Enter')send()">
+            <button onclick="send()">ENVIAR</button>
+          </div>
+        </section>
+        <aside class="box">
+          <div class="bar">[ MEMBROS ONLINE ]</div>
+          <div id="users" class="users"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const demoUsers=["Operador","Mateus","Carlos","Ana"];
+let current="";
+function enter(){
+  const n=document.getElementById("nick").value.trim();
+  const p=document.getElementById("pass").value;
+  const e=document.getElementById("err");
+  if(!n){e.textContent="Informe um apelido.";return}
+  if(p!=="LEMESAFE"){e.textContent="Senha incorreta.";return}
+  current=n;
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("room").classList.remove("hidden");
+  document.getElementById("status").textContent="ONLINE";
+  renderUsers();
+}
+function renderUsers(){
+  const names=[current,...demoUsers.filter(x=>x!==current)];
+  document.getElementById("users").innerHTML=names.map(x=>`<div class="user"><span class="dot"></span>${x}</div>`).join("");
+}
+function send(){
+  const input=document.getElementById("message");
+  const t=input.value.trim();
+  if(!t)return;
+  const d=document.createElement("div"); d.className="msg";
+  d.innerHTML=`<span class="nick">${escapeHtml(current)}</span><span class="time">agora</span><div class="text">${escapeHtml(t)}</div>`;
+  const box=document.getElementById("messages"); box.appendChild(d); box.scrollTop=box.scrollHeight; input.value="";
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+</script>
+</body>
+</html>
